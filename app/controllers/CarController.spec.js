@@ -157,3 +157,90 @@ describe('#handleCreateCar', () => {
     });
   });
 });
+
+describe('#handleUpdateCar', () => {
+  it('should call res.status(200) and res.json updated car', async () => {
+    const name = "Duster 360"
+    const price = 300000
+    const size = "MEDIUM"
+    const image = "image.png"
+    const isCurrentlyRented = false
+
+    const mockRequest = {
+      params: {
+        id: 1
+      },
+      body: {
+        name,
+        price,
+        size,
+        image,
+        isCurrentlyRented
+      },
+    };
+
+    const mockCar = new Car({ name, price, size });
+    mockCar.update = jest.fn().mockReturnThis();
+
+    const mockCarModel = {};
+    mockCarModel.findByPk = jest.fn().mockReturnValue(mockCar);
+
+    const mockResponse = {};
+    mockResponse.status = jest.fn().mockReturnThis();
+    mockResponse.json = jest.fn().mockReturnThis();
+
+    const carController = new CarController({ carModel: mockCarModel });
+    await carController.handleUpdateCar(mockRequest, mockResponse);
+
+    expect(mockCarModel.findByPk).toHaveBeenCalledWith(1);
+    expect(mockCar.update).toHaveBeenCalledWith({ name, price, size, image, isCurrentlyRented });
+    expect(mockResponse.status).toHaveBeenCalledWith(200);
+    expect(mockResponse.json).toHaveBeenCalledWith(mockCar);
+  });
+
+  it('should call res.status(422) and res.json error name and error message', async () => {
+    const err = new Error("Something");
+    const name = "Duster 360"
+    const price = 300000
+    const size = "MEDIUM"
+    const image = "image.png"
+    const isCurrentlyRented = false
+
+    const mockRequest = {
+      body: {
+        name,
+        price,
+        size,
+        image,
+        isCurrentlyRented
+      },
+    };
+
+    const mockCarModel = {
+      create: jest.fn().mockReturnValue(Promise.reject(err)),
+    };
+
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    };
+
+    const carController = new CarController({ carModel: mockCarModel });
+    await carController.handleCreateCar(mockRequest, mockResponse);
+
+    expect(mockCarModel.create).toHaveBeenCalledWith({
+      name,
+      price,
+      size,
+      image,
+      isCurrentlyRented
+    });
+    expect(mockResponse.status).toHaveBeenCalledWith(422);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      error: {
+        name: err.name,
+        message: err.message,
+      },
+    });
+  });
+});
