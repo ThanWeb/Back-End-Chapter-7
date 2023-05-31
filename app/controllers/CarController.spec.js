@@ -80,3 +80,80 @@ describe('#handleGetCar', () => {
     expect(mockResponse.json).toHaveBeenCalledWith(cars[0]);
   });
 });
+
+describe('#handleCreateCar', () => {
+  it('should call res.status(201) and res.json created car', async () => {
+    const name = "Duster 360"
+    const price = 300000
+    const size = "MEDIUM"
+
+    const mockRequest = {
+      body: {
+        name,
+        price,
+        size
+      },
+    };
+
+    const car = new Car({ name, price, size });
+    const mockCarModel = { create: jest.fn().mockReturnValue(car) };
+
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    };
+
+    const carController = new CarController({ carModel: mockCarModel });
+    await carController.handleCreateCar(mockRequest, mockResponse);
+
+    expect(mockCarModel.create).toHaveBeenCalled();
+    expect(mockResponse.status).toHaveBeenCalledWith(201);
+    expect(mockResponse.json).toHaveBeenCalledWith(car);
+  });
+
+  it('should call res.status(422) and res.json error name and error message', async () => {
+    const err = new Error("Something");
+    const name = "Duster 360"
+    const price = 300000
+    const size = "MEDIUM"
+    const image = "image.png"
+    const isCurrentlyRented = false
+
+    const mockRequest = {
+      body: {
+        name,
+        price,
+        size,
+        image,
+        isCurrentlyRented
+      },
+    };
+
+    const mockCarModel = {
+      create: jest.fn().mockReturnValue(Promise.reject(err)),
+    };
+
+    const mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    };
+
+    const carController = new CarController({ carModel: mockCarModel });
+    await carController.handleCreateCar(mockRequest, mockResponse);
+
+    expect(mockCarModel.create).toHaveBeenCalledWith({
+      name,
+      price,
+      size,
+      image,
+      isCurrentlyRented
+    });
+    expect(mockResponse.status).toHaveBeenCalledWith(422);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      error: {
+        name: err.name,
+        message: err.message,
+      },
+    });
+  });
+});
