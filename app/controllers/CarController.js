@@ -134,8 +134,18 @@ class CarController extends ApplicationController {
   }
 
   handleDeleteCar = async (req, res) => {
-    const car = await this.carModel.destroy(req.params.id); 
-    res.status(204).end();
+    try {
+      const car = await this.carModel.findByPk(req.params.id); 
+      await car.destroy();
+      res.status(204).end();
+    } catch (err) {
+      res.status(422).json({
+        error: {
+          name: err.name,
+          message: err.message,
+        },
+      });
+    }
   }
 
   getCarFromRequest(req) {
